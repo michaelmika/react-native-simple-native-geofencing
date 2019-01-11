@@ -1,5 +1,5 @@
 
-package com.simnplegeofencing.reactnative;
+package com.simplegeofencing.reactnative;
 
 import java.util.Arrays;
 import java.util.Collections;

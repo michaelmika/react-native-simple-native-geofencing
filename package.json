@@ -1,4 +1,3 @@
-
 {
   "name": "react-native-simple-native-geofencing",
   "version": "1.0.0",
@@ -13,6 +12,6 @@
   "author": "",
   "license": "",
   "peerDependencies": {
-    "react-native": "^0.41.2"
+    "react-native": ">0.47.0"
   }
 }

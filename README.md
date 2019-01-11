@@ -22,7 +22,7 @@
 #### Android
 
 1. Open up `android/app/src/main/java/[...]/MainActivity.java`
-  - Add `import com.simnplegeofencing.reactnative.RNSimpleNativeGeofencingPackage;` to the imports at the top of the file
+  - Add `import com.simplegeofencing.reactnative.RNSimpleNativeGeofencingPackage;` to the imports at the top of the file
   - Add `new RNSimpleNativeGeofencingPackage()` to the list returned by the `getPackages()` method
 2. Append the following lines to `android/settings.gradle`:
   	```
@@ -33,13 +33,54 @@
   	```
       compile project(':react-native-simple-native-geofencing')
   	```
-
+### Permissions
+#### Android
+Edit AndroidManifest.xml and add the following permission and ServiceIntent:
+```
+<manifest ...>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <application
+        ...
+        android:allowBackup="true">
+        <service android:name="com.simplegeofencing.reactnative.GeofenceTransitionsIntentService"/>
+    <application/>
+</manifest>
+```
 
 ## Usage
 ```javascript
 import RNSimpleNativeGeofencing from 'react-native-simple-native-geofencing';
 
 // TODO: What to do with the module?
-RNSimpleNativeGeofencing;
+RNSimpleNativeGeofencing.addGeofence(geofence, duration);
+```
+### Methods
+| method      | arguments | notes |
+| ----------- | ----------- | ----------- |
+| `addGeofence` | `geofence`: GeofenceObject, `duration: number | Adds one geofence to the native geofence list |
+| `addGeofences` | `geofencesArray`: Array<GeofenceObject>, `monitoringGeofence`: MonitoringGeofenceObject, `duration`: number, `monitoringCallback`: function | Adds a list of geofences, a Geofence for monitoring and starts monitoring |
+| `addMonitoringBorder` | `geofence`: MonitoringGeofenceObject, `duration`: number, `callback`: function | Adds a MonitoringBorder which is a Geofence used when to update|
+| `removeMonitoringBorder` | | Removes the MonitoringBorder and stops monitoring |
+| `removeAllGeofences` |  | Removes all geofences and stops monitoring |
+| `removeGeofence` |  `geofenceKey`: String| Removes a specific geofence |
+| `startMonitoring` | | Start monitoring |
+| `stopMonitoring` | | Stop monitoring |
+### Types
+```
+type GeofenceObject {
+  key: string,
+  latitude: Number,
+  longitude: Number,
+  radius: Number,
+  value: Number
+}
+```
+```
+type MonitoringGeofenceObject {
+  key: string,
+  latitude: Number,
+  longitude: Number,
+  radius: Number
+}
 ```
   
