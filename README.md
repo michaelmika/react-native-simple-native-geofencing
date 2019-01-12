@@ -65,6 +65,7 @@ RNSimpleNativeGeofencing.addGeofence(geofence, duration);
 | `removeGeofence` |  `geofenceKey`: String| Removes a specific geofence |
 | `startMonitoring` | | Start monitoring |
 | `stopMonitoring` | | Stop monitoring |
+| `isMonitoring` | | Returns promise with boolean answer |
 ### Types
 ```
 type GeofenceObject {
