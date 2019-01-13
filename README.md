@@ -57,6 +57,7 @@ RNSimpleNativeGeofencing.addGeofence(geofence, duration);
 ### Methods
 | method      | arguments | notes |
 | ----------- | ----------- | ----------- |
+| `initNotification` | `settings`: SettingObject | Initializes the notification strings and when they should appear|
 | `addGeofence` | `geofence`: GeofenceObject, `duration: number | Adds one geofence to the native geofence list |
 | `addGeofences` | `geofencesArray`: Array<GeofenceObject>, `monitoringGeofence`: MonitoringGeofenceObject, `duration`: number, `monitoringCallback`: function | Adds a list of geofences, a Geofence for monitoring and starts monitoring |
 | `addMonitoringBorder` | `geofence`: MonitoringGeofenceObject, `duration`: number, `callback`: function | Adds a MonitoringBorder which is a Geofence used when to update|
@@ -65,7 +66,7 @@ RNSimpleNativeGeofencing.addGeofence(geofence, duration);
 | `removeGeofence` |  `geofenceKey`: String| Removes a specific geofence |
 | `startMonitoring` | | Start monitoring |
 | `stopMonitoring` | | Stop monitoring |
-| `isMonitoring` | | Returns promise with boolean answer |
+
 ### Types
 ```
 type GeofenceObject {
@@ -82,6 +83,34 @@ type MonitoringGeofenceObject {
   latitude: Number,
   longitude: Number,
   radius: Number
+}
+```
+```
+type SettingObject {
+  start: {
+    notify: boolean,    // If Notification should be fired on start tracking
+    title: string,      // Title of Notification
+    description: string // Content of Notification
+  },
+  stop: {
+    notify: boolean,
+    title: string,
+    description: string
+  },
+  enter: {
+    notify: boolean,
+    title: string,
+    description: string
+  },
+  exit: {
+    notify: boolean,
+    title: string,
+    description: string
+  },
+  channel: {            // Only Android specific
+    title: string,
+    description: string
+  }
 }
 ```
   

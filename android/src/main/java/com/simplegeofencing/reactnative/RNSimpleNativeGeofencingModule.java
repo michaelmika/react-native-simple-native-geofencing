@@ -1,19 +1,15 @@
 
 package com.simplegeofencing.reactnative;
 
-import android.Manifest;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.NotificationChannel;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
 //import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -44,12 +40,24 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   private final String CHANNEL_ID = "channel_01";
   private int notificationId = 1;
   private NotificationChannel channel;
+  public String[] notifyChannelString = new String[2];
+  private boolean notifyStart = false;
+  private boolean notifyStop = false;
+  public boolean notifyEnter = false;
+  public boolean notifyExit = false;
+  public String[] notifyStartString = new String[2];
+  public String[] notifyStopString = new String[2];
+  public String[] notifyEnterString = new String[2];
+  public String[] notifyExitString = new String[2];
+
 
   public RNSimpleNativeGeofencingModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
     mGeofencingClient = LocationServices.getGeofencingClient(reactContext);
     mGeofenceList = new ArrayList<Geofence>();
+    notifyChannelString[0] = "Title";
+    notifyChannelString[1] = "Description";
   }
 
   @Override
@@ -60,6 +68,37 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   /*
     React Native functions
    */
+
+  @ReactMethod
+  public void initNotification(ReadableMap pText){
+    ReadableMap pChannel = pText.getMap("channel");
+    notifyChannelString[0] = pChannel.getString("title");
+    notifyChannelString[1] = pChannel.getString("description");
+    ReadableMap pStart = pText.getMap("start");
+    if(pStart.getBoolean("notify")){
+      notifyStart = true;
+      notifyStartString[0] = pStart.getString("title");
+      notifyStartString[1] = pStart.getString("description");
+    }
+    ReadableMap pStop = pText.getMap("stop");
+    if(pStop.getBoolean("notify")){
+      notifyStop = true;
+      notifyStopString[0] = pStop.getString("title");
+      notifyStopString[1] = pStop.getString("description");
+    }
+    ReadableMap pEnter = pText.getMap("enter");
+    if(pEnter.getBoolean("notify")){
+      notifyEnter = true;
+      notifyEnterString[0] = pEnter.getString("title");
+      notifyEnterString[1] = pEnter.getString("description");
+    }
+    ReadableMap pExit = pText.getMap("exit");
+    if(pExit.getBoolean("notify")){
+      notifyExit = true;
+      notifyExitString[0] = pExit.getString("title");
+      notifyExitString[1] = pExit.getString("description");
+    }
+  }
 
   @ReactMethod
   public void removeAllGeofences(){
@@ -75,7 +114,13 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
         index = i;
       }
     }
-    mGeofenceList.remove(index);
+    if(index != -1){
+      mGeofenceList.remove(index);
+      //Remove from Client as well
+      List<String> item = new ArrayList<String>();
+      item.add(key);
+      mGeofencingClient.removeGeofences(item);
+    }
   }
 
   @ReactMethod
@@ -140,19 +185,21 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     //if (ContextCompat.checkSelfPermission(this.reactContext, Manifest.permission.ACCESS_FINE_LOCATION)
     //        != PackageManager.PERMISSION_GRANTED){
       mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
-              .addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void aVoid) {
-                  Log.i(TAG, "Start Monitoring");
-                  postNotification("Start Monitoring", "Pressed Start Monitoring");
-                }
-              })
-              .addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                  Log.e(TAG, "Start Monitoring: " + e.getMessage());
-                }
-              });
+        .addOnSuccessListener(new OnSuccessListener<Void>() {
+          @Override
+          public void onSuccess(Void aVoid) {
+            Log.i(TAG, "Start Monitoring");
+            if(notifyStart == true){
+              postNotification(notifyStartString[0], notifyStartString[1]);
+            }
+          }
+        })
+        .addOnFailureListener(new OnFailureListener() {
+          @Override
+          public void onFailure(@NonNull Exception e) {
+            Log.e(TAG, "Start Monitoring: " + e.getMessage());
+          }
+        });
     //}
 
   }
@@ -165,7 +212,9 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
         @Override
         public void onSuccess(Void aVoid) {
           Log.i(TAG, "Stop Monitoring");
-          postNotification("Stop Monitoring", "Pressed Stop Monitoring");
+          if(notifyStop == true){
+            postNotification(notifyStopString[0], notifyStopString[1]);
+          }
         }
       })
       .addOnFailureListener(new OnFailureListener() {
@@ -175,6 +224,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
         }
       });
   }
+
 
   /*
     Helpfunctions
@@ -192,10 +242,29 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     if (mGeofencePendingIntent != null) {
       return mGeofencePendingIntent;
     }
-    Intent intent = new Intent(this.reactContext, GeofenceTransitionsIntentService.class);
+    Intent intent = new Intent(reactContext, GeofenceTransitionsIntentService.class);
+    // Add notification data
+    intent.putExtra("notifyEnter", notifyEnter);
+    if(notifyEnter == true){
+      intent.putExtra("notifyEnterStringTitle", notifyEnterString[0]);
+      intent.putExtra("notifyEnterStringDescription", notifyEnterString[1]);
+    }else{
+      intent.putExtra("notifyEnterStringTitle", "");
+      intent.putExtra("notifyEnterStringDescription", "");
+    }
+    intent.putExtra("notifyExit", notifyExit);
+    if(notifyExit == true){
+      intent.putExtra("notifyExitStringTitle", notifyExitString[0]);
+      intent.putExtra("notifyExitStringDescription", notifyExitString[1]);
+    }else{
+      intent.putExtra("notifyExitStringTitle", "");
+      intent.putExtra("notifyExitStringDescription", "");
+    }
+    intent.putExtra("notifyChannelStringTitle", notifyChannelString[0]);
+    intent.putExtra("notifyChannelStringDescription", notifyChannelString[1]);
     // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
     // calling addGeofences() and removeGeofences().
-    mGeofencePendingIntent = PendingIntent.getService(reactContext, 1, intent, PendingIntent.
+    mGeofencePendingIntent = PendingIntent.getService(reactContext, 0, intent, PendingIntent.
             FLAG_UPDATE_CURRENT);
     return mGeofencePendingIntent;
   }
@@ -237,8 +306,8 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     // Create the NotificationChannel, but only on API 26+ because
     // the NotificationChannel class is new and not in the support library
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channel==null) {
-      CharSequence name = "SenSafety";
-      String description = "SenSafety Description";
+      CharSequence name = notifyChannelString[0];
+      String description = notifyChannelString[1];
       int importance = NotificationManager.IMPORTANCE_DEFAULT;
       NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
       channel.setDescription(description);
