@@ -1,6 +1,8 @@
 
 # react-native-simple-native-geofencing
 
+**Attention: This repo is not yet fully implemented and stable!**
+
 ## Getting started
 
 `$ npm install react-native-simple-native-geofencing --save`
