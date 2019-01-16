@@ -62,7 +62,7 @@ RNSimpleNativeGeofencing.addGeofence(geofence, duration);
 | `initNotification` | `settings`: SettingObject | Initializes the notification strings and when they should appear|
 | `addGeofence` | `geofence`: GeofenceObject, `duration`: number | Adds one geofence to the native geofence list |
 | `addGeofences` | `geofencesArray`: Array<GeofenceObject>, `monitoringGeofence`: MonitoringGeofenceObject, `duration`: number, `monitoringCallback`: function | Adds a list of geofences, a Geofence for monitoring and starts monitoring |
-| `updateGeofences` | `geofencesArray`: Array<GeofenceObject>, `monitoringGeofence`: MonitoringGeofenceObject, `monitoringCallback`: function | Deletes Geofences and adds the new ones with the remaining duration |
+| `updateGeofences` | `geofencesArray`: Array<GeofenceObject>, `monitoringGeofence`: MonitoringGeofenceObject, `duration`: number, `monitoringCallback`: function | Deletes Geofences and adds the new ones |
 | `addMonitoringBorder` | `geofence`: MonitoringGeofenceObject, `duration`: number, `callback`: function | Adds a MonitoringBorder which is a Geofence used when to update|
 | `removeMonitoringBorder` | | Removes the MonitoringBorder and stops monitoring |
 | `removeAllGeofences` |  | Removes all geofences and stops monitoring |
@@ -70,6 +70,7 @@ RNSimpleNativeGeofencing.addGeofence(geofence, duration);
 | `startMonitoring` | | Start monitoring |
 | `stopMonitoring` | | Stop monitoring |
 
+The function `monitoringCallback()` gets fired with the parameter of the remaining duration.
 ### Types
 ```
 type GeofenceObject {
