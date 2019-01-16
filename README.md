@@ -60,8 +60,9 @@ RNSimpleNativeGeofencing.addGeofence(geofence, duration);
 | method      | arguments | notes |
 | ----------- | ----------- | ----------- |
 | `initNotification` | `settings`: SettingObject | Initializes the notification strings and when they should appear|
-| `addGeofence` | `geofence`: GeofenceObject, `duration: number | Adds one geofence to the native geofence list |
+| `addGeofence` | `geofence`: GeofenceObject, `duration`: number | Adds one geofence to the native geofence list |
 | `addGeofences` | `geofencesArray`: Array<GeofenceObject>, `monitoringGeofence`: MonitoringGeofenceObject, `duration`: number, `monitoringCallback`: function | Adds a list of geofences, a Geofence for monitoring and starts monitoring |
+| `updateGeofences` | `geofencesArray`: Array<GeofenceObject>, `monitoringGeofence`: MonitoringGeofenceObject, `monitoringCallback`: function | Deletes Geofences and adds the new ones with the remaining duration |
 | `addMonitoringBorder` | `geofence`: MonitoringGeofenceObject, `duration`: number, `callback`: function | Adds a MonitoringBorder which is a Geofence used when to update|
 | `removeMonitoringBorder` | | Removes the MonitoringBorder and stops monitoring |
 | `removeAllGeofences` |  | Removes all geofences and stops monitoring |
@@ -95,6 +96,11 @@ type SettingObject {
     description: string // Content of Notification
   },
   stop: {
+    notify: boolean,
+    title: string,
+    description: string
+  },
+  timeout: {            // automatic stop by end of duration 
     notify: boolean,
     title: string,
     description: string
