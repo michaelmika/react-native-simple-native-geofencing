@@ -31,8 +31,8 @@ import java.util.List;
 public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   private GeofencingClient mGeofencingClient;
   private List<Geofence> mGeofenceList;
-  private Geofence mMonitorGeofence;
-  private Callback mMonitorCallback;
+  private Geofence mMonitorGeofence=null;
+  private Callback mMonitorCallback=null;
   private PendingIntent mGeofencePendingIntent;
   private PendingIntent mMonitorGeofencePendingIntent;
   private final ReactApplicationContext reactContext;
@@ -103,6 +103,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void removeAllGeofences(){
     mGeofenceList.clear();
+    removeMonitoringBorder();
     stopMonitoring();
   }
 
@@ -138,6 +139,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
       .build();
     mMonitorCallback = callback;
   }
+
   @ReactMethod
   public void removeMonitoringBorder(){
     mMonitorGeofence = null;
@@ -161,6 +163,25 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     }
     //Start Monitoring
     startMonitoring();
+  }
+
+  @ReactMethod
+  public void updateGeofences(
+          ReadableArray geofenceArray,
+          ReadableMap monitoringGeofence,
+          int duration,
+          Callback monitoringCallback
+  ){
+    mGeofenceList.clear();
+    silentStopMonitoring();
+    //Add monitor geofence
+    addMonitoringBorder(monitoringGeofence, duration, monitoringCallback);
+    //Add geohashes
+    for (int i = 0; i < geofenceArray.size(); i++) {
+      ReadableMap geofence = geofenceArray.getMap(i);
+      addGeofence(geofence, duration);
+    }
+    silentStartMonitoring();
   }
 
   @ReactMethod
@@ -188,18 +209,70 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
         .addOnSuccessListener(new OnSuccessListener<Void>() {
           @Override
           public void onSuccess(Void aVoid) {
-            Log.i(TAG, "Start Monitoring");
-            if(notifyStart == true){
-              postNotification(notifyStartString[0], notifyStartString[1]);
+            Log.i(TAG, "Added Geofences");
+            if(mMonitorGeofence != null){
+              mGeofencingClient.addGeofences(
+                      getMonitorGeofencingRequest(),
+                      getMonitorGeofencePendingIntent()
+              ).addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                  Log.i(TAG, "Added Monitoring Geofence");
+                  notifyNow("start");
+                }
+              }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                  Log.e(TAG, "Adding Monitoring Geofence: " + e.getMessage());
+                }
+              });
+            }else{
+              notifyNow("start");
             }
           }
         })
         .addOnFailureListener(new OnFailureListener() {
           @Override
           public void onFailure(@NonNull Exception e) {
-            Log.e(TAG, "Start Monitoring: " + e.getMessage());
+            Log.e(TAG, "Adding Geofences: " + e.getMessage());
           }
         });
+    //}
+
+  }
+  public void silentStartMonitoring() {
+    //Context removed by Listeners
+    //if (ContextCompat.checkSelfPermission(this.reactContext, Manifest.permission.ACCESS_FINE_LOCATION)
+    //        != PackageManager.PERMISSION_GRANTED){
+    mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+            .addOnSuccessListener(new OnSuccessListener<Void>() {
+              @Override
+              public void onSuccess(Void aVoid) {
+                Log.i(TAG, "Updated Geofences");
+                if(mMonitorGeofence != null){
+                  mGeofencingClient.addGeofences(
+                          getMonitorGeofencingRequest(),
+                          getMonitorGeofencePendingIntent()
+                  ).addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                      Log.i(TAG, "Updated Monitoring Geofence");
+                    }
+                  }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                      Log.e(TAG, "Updating Monitoring Geofence: " + e.getMessage());
+                    }
+                  });
+                }
+              }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+              @Override
+              public void onFailure(@NonNull Exception e) {
+                Log.e(TAG, "Updating Geofences: " + e.getMessage());
+              }
+            });
     //}
 
   }
@@ -211,20 +284,66 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
       .addOnSuccessListener(new OnSuccessListener<Void>() {
         @Override
         public void onSuccess(Void aVoid) {
-          Log.i(TAG, "Stop Monitoring");
-          if(notifyStop == true){
-            postNotification(notifyStopString[0], notifyStopString[1]);
+          Log.i(TAG, "Removed Geofences");
+          if(mMonitorGeofence != null) {
+            mGeofencingClient.removeGeofences(getMonitorGeofencePendingIntent())
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                      @Override
+                      public void onSuccess(Void aVoid) {
+                        Log.i(TAG, "Removed Monitoring Geofence");
+                        notifyNow("stop");
+                      }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                      @Override
+                      public void onFailure(@NonNull Exception e) {
+                        Log.e(TAG, "Removing Monitoring Geofences: " + e.getMessage());
+                      }
+                    });
+          }else{
+            notifyNow("stop");
           }
         }
       })
       .addOnFailureListener(new OnFailureListener() {
         @Override
         public void onFailure(@NonNull Exception e) {
-          Log.e(TAG, "Stop Monitoring: " + e.getMessage());
+          Log.e(TAG, "Removing Geofences: " + e.getMessage());
         }
       });
   }
 
+  public void silentStopMonitoring() {
+    //Context removed by Listeners
+    mGeofencingClient.removeGeofences(getGeofencePendingIntent())
+            .addOnSuccessListener(new OnSuccessListener<Void>() {
+              @Override
+              public void onSuccess(Void aVoid) {
+                Log.i(TAG, "Removed Geofences");
+                if(mMonitorGeofence != null) {
+                  mGeofencingClient.removeGeofences(getMonitorGeofencePendingIntent())
+                          .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                              Log.i(TAG, "Removed Monitoring Geofence");
+                            }
+                          })
+                          .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                              Log.e(TAG, "Removing Monitoring Geofences: " + e.getMessage());
+                            }
+                          });
+                }
+              }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+              @Override
+              public void onFailure(@NonNull Exception e) {
+                Log.e(TAG, "Removing Geofences: " + e.getMessage());
+              }
+            });
+  }
 
   /*
     Helpfunctions
@@ -291,6 +410,18 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   /*
        Notifications
     */
+  private void notifyNow(String action){
+    if(action == "start"){
+      if(notifyStart == true){
+        postNotification(notifyStartString[0], notifyStartString[1]);
+      }
+    }
+    if(action == "stop"){
+      if(notifyStop == true){
+        postNotification(notifyStopString[0], notifyStopString[1]);
+      }
+    }
+  }
   private NotificationCompat.Builder getNotificationBuilder(String Title, String Content) {
     //Onclick
     //Intent intent = new Intent(this.reactContext, AlertDetails.class);
