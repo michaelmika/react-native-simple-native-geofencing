@@ -30,8 +30,7 @@ public class MonitorTransitionsIntentService extends IntentService {
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
 
         // Test that the reported transition was of interest.
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
 
             // Get the geofences that were triggered. A single event can trigger
             // multiple geofences.
@@ -42,6 +41,8 @@ public class MonitorTransitionsIntentService extends IntentService {
                     geofenceTransition,
                     triggeringGeofences
             );
+
+            //SEND CALLBACK -> how?
 
             // Send notification and log the transition details.
             //sendNotification(geofenceTransitionDetails);
