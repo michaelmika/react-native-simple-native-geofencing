@@ -49,6 +49,13 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         self.notificationCenter = UNUserNotificationCenter.current()
         notificationCenter.delegate = self
         
+        let options: UNAuthorizationOptions = [.alert, .sound]
+        notificationCenter.requestAuthorization(options: options) { (granted, error) in
+            if !granted {
+                print("Permission not granted")
+            }
+        }
+        
     }
     
     
@@ -86,6 +93,8 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     func addGeofence(geofence:NSDictionary, duration:Int) -> Void {
         
         DispatchQueue.main.async {
+            
+            print("\n\n\n\naddGeofence\n\n\n\n")
             
             self.allwaysInit()
             
@@ -145,6 +154,8 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         
         DispatchQueue.main.async {
             
+            print("\n\n\n\naddGeofences\n\n\n\n")
+            
             self.allwaysInit()
             
             
@@ -174,6 +185,8 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     func updateGeofences(geofencesArray:NSArray, geofence:NSDictionary, duration:Int) -> Void {
         
         DispatchQueue.main.async {
+            
+            print("\n\n\n\nupdateGeofences\n\n\n\n")
             
             self.allwaysInit()
             
@@ -207,6 +220,8 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         
         DispatchQueue.main.async {
             
+            print("\n\n\n\naddMonitoringBorder\n\n\n\n")
+            
             self.allwaysInit()
             
             //monitoring boarder (needs specific ID)
@@ -222,6 +237,8 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     func removeMonitoringBorder() -> Void {
         
         DispatchQueue.main.async {
+            
+            print("\n\n\n\nremoveMonitoringBorder\n\n\n\n")
             
             self.allwaysInit()
             
@@ -251,6 +268,8 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         
         DispatchQueue.main.async {
             
+            print("\n\n\n\nremoveAllGeofences\n\n\n\n")
+            
             self.allwaysInit()
             
             for geo in self.currentActiveGeofences {
@@ -272,6 +291,8 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     func removeGeofence(geofenceKey:String) -> Void {
         
         DispatchQueue.main.async {
+            
+            print("\n\n\n\nremoveGeofence\n\n\n\n")
             
             self.allwaysInit()
             
@@ -496,7 +517,9 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         // get the notification identifier to respond accordingly
         let identifier = response.notification.request.identifier
         
+        // do what you need to do
         print(identifier)
+        // ...
     }
     
     
