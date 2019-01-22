@@ -71,6 +71,7 @@ RNSimpleNativeGeofencing.addGeofence(geofence, duration);
 | `stopMonitoring` | | Stop monitoring |
 
 The function `monitoringCallback()` gets fired with the parameter of the remaining duration.
+`duration` is in millisec.
 ### Types
 ```
 type GeofenceObject {
