@@ -62,8 +62,8 @@ RNSimpleNativeGeofencing.addGeofence(geofence, duration);
 | `initNotification` | `settings`: SettingObject | Initializes the notification strings and when they should appear|
 | `addGeofence` | `geofence`: GeofenceObject, `duration`: number | Adds one geofence to the native geofence list |
 | `addGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number | Adds a list of geofences, a Geofence for monitoring and starts monitoring |
-| `updateGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number | Deletes Geofences and adds the new ones |
 | `removeAllGeofences` |  | Removes all geofences and stops monitoring |
+| `updateGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number | Deletes Geofences and adds the new ones without notifications|
 | `removeGeofence` |  `geofenceKey`: String| Removes a specific geofence |
 | `startMonitoring` | | Start monitoring |
 | `stopMonitoring` | | Stop monitoring |
