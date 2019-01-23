@@ -101,7 +101,9 @@ import RNSimpleNativeGeofencing from 'react-native-simple-native-geofencing';
 export default class App extends Component {
     componentWillMount() {
         //see above
-        requestLocationPermission();
+        if(Platform.OS === 'android'){
+            requestLocationPermission();       
+        }
     }
     componentDidMount(){
         //set up Notifications
