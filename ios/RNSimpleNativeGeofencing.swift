@@ -10,12 +10,13 @@ import Foundation
 import CoreLocation
 import UserNotifications
 
-@available(iOS 12.0, *)
+
+@available(iOS 10.0, *)
 @objc(RNSimpleNativeGeofencing)
-class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotificationCenterDelegate {
+class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUserNotificationCenterDelegate {
     
     
-    //MARK: - Init / Setup
+    //MARK: - Init / Setup / Vars
     
     static let sharedInstance = RNSimpleNativeGeofencing()
     
@@ -39,7 +40,20 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     var notifyStart = false
     var notifyStop = false
     
+    var globalDeletionTimer = 0
+    var globaltimer: Timer?
     
+    var valueDic: Dictionary<String, String> = [:]
+    
+    
+    
+    
+    
+    //MARK: - Init
+    
+    override func supportedEvents() -> [String]! {
+        return ["leftMonitoringBorderWithDuration"]
+    }
     
     fileprivate func allwaysInit() {
         
@@ -59,6 +73,10 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     }
     
     
+    
+    
+    
+    
     //MARK: -  Public Interface
     
     @objc(initNotification:)
@@ -66,15 +84,12 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         
         DispatchQueue.main.async {
             
-            print("\n\n\n\ninitNotification\n\n\n\n")
-            
             self.allwaysInit()
             
             self.notifyEnter = settings.value(forKeyPath: "enter.notify") as? Bool ?? true
             self.notifyExit = settings.value(forKeyPath: "exit.notify") as? Bool ?? true
             self.notifyStart = settings.value(forKeyPath: "start.notify") as? Bool ?? true
             self.notifyStop = settings.value(forKeyPath: "stop.notify") as? Bool ?? true
-            
             
             self.didEnterTitle = settings.value(forKeyPath: "enter.title") as? String ?? "Be careful!"
             self.didEnterBody = settings.value(forKeyPath: "enter.description") as? String ?? "It may be dangerous in the area where you are currently staying."
@@ -94,8 +109,6 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         
         DispatchQueue.main.async {
             
-            print("\n\n\n\naddGeofence\n\n\n\n")
-            
             self.allwaysInit()
             
             guard let lat = geofence.value(forKey: "latitude") as? Double else {
@@ -114,6 +127,8 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
                 return
             }
             
+            let value = geofence.value(forKey: "value") as? String
+            
             let geofenceRegionCenter = CLLocationCoordinate2D(
                 latitude: lat,
                 longitude: lon
@@ -127,18 +142,35 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
             
             if self.notifyEnter {
                 geofenceRegion.notifyOnEntry = true
+                
+                if value != nil {
+                    self.valueDic[id] = value!
+                }
+                
             }else{
                 geofenceRegion.notifyOnEntry = false
             }
             
             if self.notifyExit {
                 geofenceRegion.notifyOnExit = true
+                
+                if value != nil {
+                    self.valueDic[id] = value!
+                }
+                
             }else{
                 geofenceRegion.notifyOnExit = false
             }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(duration)) {
-                self.removeGeofence(geofenceKey: id)
+            if id == "monitor"{
+                geofenceRegion.notifyOnExit = true
+                geofenceRegion.notifyOnEntry = true
+            }
+            
+            if !(duration <= 0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(duration)) {
+                    self.removeGeofence(geofenceKey: id)
+                }
             }
             
             self.currentGeofences.append(geofenceRegion)
@@ -149,15 +181,12 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     }
     
     
-    @objc(addGeofences:monitoringGeofence:duration:)
-    func addGeofences(geofencesArray:NSArray, geofence:NSDictionary, duration:Int) -> Void {
+    @objc(addGeofences:duration:)
+    func addGeofences(geofencesArray:NSArray, duration:Int) -> Void {
         
         DispatchQueue.main.async {
             
-            print("\n\n\n\naddGeofences\n\n\n\n")
-            
             self.allwaysInit()
-            
             
             //add small geofences
             for geofence in geofencesArray {
@@ -166,27 +195,25 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
                     return
                 }
                 
-                self.addGeofence(geofence: geo, duration: duration)
+                self.addGeofence(geofence: geo, duration: 0)
                 
             }
             
-            //monitoring boarder (needs specific ID)
-            self.addGeofence(geofence: geofence, duration: duration)
-            
-            
             self.startMonitoring()
+            
+            self.globalDeletionTimer = duration
+            
+            self.globaltimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(self.globalCountdown), userInfo: nil, repeats: true)
             
         }
         
     }
     
     
-    @objc(updateGeofences:monitoringGeofence:duration:)
-    func updateGeofences(geofencesArray:NSArray, geofence:NSDictionary, duration:Int) -> Void {
+    @objc(updateGeofences:duration:)
+    func updateGeofences(geofencesArray:NSArray, duration:Int) -> Void {
         
         DispatchQueue.main.async {
-            
-            print("\n\n\n\nupdateGeofences\n\n\n\n")
             
             self.allwaysInit()
             
@@ -203,12 +230,7 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
                 
             }
             
-            //monitoring boarder (needs specific ID)
-            self.addGeofence(geofence: geofence, duration: duration)
-            
-            
-            self.startMonitoring()
-            
+            self.startSilenceMonitoring()
             
         }
         
@@ -219,8 +241,6 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     func addMonitoringBorder(geofence:NSDictionary, duration:Int) -> Void {
         
         DispatchQueue.main.async {
-            
-            print("\n\n\n\naddMonitoringBorder\n\n\n\n")
             
             self.allwaysInit()
             
@@ -238,25 +258,23 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         
         DispatchQueue.main.async {
             
-            print("\n\n\n\nremoveMonitoringBorder\n\n\n\n")
-            
             self.allwaysInit()
             
             var count = 0
             for geo in self.currentActiveGeofences {
-                if geo.identifier == "border"{
+                if geo.identifier == "monitor"{
                     self.locationManager.stopMonitoring(for: geo)
                     self.currentActiveGeofences.remove(at: count)
                 }
-                count = count + 1;
+                count = count + 1
             }
             
             var count2 = 0
             for geo in self.currentGeofences {
-                if geo.identifier == "border"{
+                if geo.identifier == "monitor"{
                     self.currentGeofences.remove(at: count2)
                 }
-                count2 = count2 + 1;
+                count2 = count2 + 1
             }
         }
         
@@ -268,11 +286,11 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         
         DispatchQueue.main.async {
             
-            print("\n\n\n\nremoveAllGeofences\n\n\n\n")
-            
             self.allwaysInit()
             
             for geo in self.currentActiveGeofences {
+                
+                self.valueDic[geo.identifier] = nil
                 
                 self.locationManager.stopMonitoring(for: geo)
                 
@@ -281,6 +299,9 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
             self.currentActiveGeofences = []
             self.currentGeofences = []
             
+            if self.notifyStop {
+                self.notifyStart(started: false)
+            }
             
         }
         
@@ -292,13 +313,14 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         
         DispatchQueue.main.async {
             
-            print("\n\n\n\nremoveGeofence\n\n\n\n")
-            
             self.allwaysInit()
             
             var count = 0
             for geo in self.currentActiveGeofences {
                 if geo.identifier == geofenceKey{
+                    
+                    self.valueDic[geo.identifier] = nil
+                    
                     self.locationManager.stopMonitoring(for: geo)
                     self.currentActiveGeofences.remove(at: count)
                 }
@@ -308,6 +330,9 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
             var count2 = 0
             for geo in self.currentGeofences {
                 if geo.identifier == geofenceKey{
+                    
+                    self.valueDic[geo.identifier] = nil
+                    
                     self.currentGeofences.remove(at: count2)
                 }
                 count2 = count2 + 1;
@@ -324,8 +349,6 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
         
         DispatchQueue.main.async {
             
-            print("\n\n\n\nstartMonitoring()\n\n\n\n")
-            
             self.allwaysInit()
             
             for geo in self.currentGeofences {
@@ -341,9 +364,7 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
                 self.notifyStart(started: true)
             }
             
-            
         }
-        
     }
     
     
@@ -351,8 +372,6 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     func stopMonitoring() -> Void {
         
         DispatchQueue.main.async {
-            
-            print("\n\n\n\nstopMonitoring\n\n\n\n")
             
             self.allwaysInit()
             
@@ -374,11 +393,35 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     
     
     
+    //MARK: - helpe
     
+    func startSilenceMonitoring() -> Void {
+        
+        DispatchQueue.main.async {
+            
+            self.allwaysInit()
+            
+            for geo in self.currentGeofences {
+                
+                self.locationManager.startMonitoring(for: geo)
+                self.currentActiveGeofences.append(geo)
+                
+            }
+            
+            self.currentGeofences = []
+        }
+    }
     
-    
-    
-    
+    @objc func globalCountdown(){
+        
+        globalDeletionTimer = globalDeletionTimer - 60000
+        
+        if globalDeletionTimer <= 0 {
+            self.removeAllGeofences()
+            self.globaltimer?.invalidate()
+        }
+        
+    }
     
     
     
@@ -389,20 +432,45 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
     
     private func handleEvent(region: CLRegion!, didEnter: Bool) {
         
-        if region.identifier == "border" {
+        if region.identifier == "monitor" {
             
-            //TODO trigger
             if didEnter {
-                print("enter the boarder")
+                
+                let body : [String:AnyObject] = [
+                    "durationLeft": self.globalDeletionTimer as AnyObject,
+                    "leftMonitoring": "false" as AnyObject
+                ]
+                
+                self.sendEvent(withName: "leftMonitoringBorderWithDuration", body: body )
+                
             }else{
-                print("left the boarder")
+                
+                let body : [String:AnyObject] = [
+                    "durationLeft": self.globalDeletionTimer as AnyObject,
+                    "leftMonitoring": "true" as AnyObject
+                ]
+                
+                self.sendEvent(withName: "leftMonitoringBorderWithDuration", body: body )
+                
             }
             
-            
-            
         }else{
+            
             let content = UNMutableNotificationContent()
             content.sound = UNNotificationSound.default
+            
+            
+            if self.didEnterBody.contains("[value]") {
+                if let value = self.valueDic[region.identifier] {
+                    self.didEnterBody = self.didEnterBody.replacingOccurrences(of: "[value]", with: value, options: NSString.CompareOptions.literal, range:nil)
+                }
+            }
+            
+            if self.didExitBody.contains("[value]") {
+                if let value = self.valueDic[region.identifier] {
+                    self.didExitBody = self.didExitBody.replacingOccurrences(of: "[value]", with: value, options: NSString.CompareOptions.literal, range:nil)
+                }
+            }
             
             if didEnter {
                 content.title = self.didEnterTitle
@@ -502,6 +570,8 @@ class RNSimpleNativeGeofencing: NSObject, CLLocationManagerDelegate, UNUserNotif
             print("Geofence will not Work, because of missing Authorization")
         }
     }
+    
+    
     
     
     

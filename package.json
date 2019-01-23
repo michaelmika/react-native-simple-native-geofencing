@@ -1,7 +1,7 @@
 {
   "name": "react-native-simple-native-geofencing",
-  "version": "0.7.1",
-  "description": "**Attention: This repo is not yet fully implemented and stable!**",
+  "version": "0.8.0",
+  "description": "**Attention: This repo is not yet fully tested !**",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

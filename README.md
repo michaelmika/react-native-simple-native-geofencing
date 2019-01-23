@@ -1,7 +1,7 @@
 
 # react-native-simple-native-geofencing
 
-**Attention: This repo is not yet fully implemented and stable!**
+**Attention: This repo is not yet fully tested !**
 
 A native geofencing implementation for Android and iOS that allows to natively 
 post notification when entering/exiting specified geofences and to fire a 
@@ -10,8 +10,12 @@ geofence (see at the bottom of this README). This can be useful to trigger calcu
 of new Geofences when leaving one area.
 ## Restrictions
 
+### iOS
+Needs `iOS 10` or higher
+
 ### Android
 Needs a `minSdkVersion` of 19.
+
 ## Getting started
 
 `$ npm install react-native-simple-native-geofencing --save`
@@ -19,6 +23,14 @@ Needs a `minSdkVersion` of 19.
 ### Mostly automatic installation
 
 `$ react-native link react-native-simple-native-geofencing`
+
+#### iOS only:
+
+**Attention**
+
+For the module to work at least one `.Swift` file and a `Bridging-Header.h` must be added in the xcode project. Simply create an empty Swift File and Xcode will ask you if you wish to add a `Bridging-Header.h` to your project. Both Files can be empty.
+
+For background updates you have to activate this in your Xcode Project under: `Project ` ➜ `Capabilities` ➜ `Background Modes` with at least `Location updates` !
 
 ### Manual installation
 
@@ -45,6 +57,24 @@ Needs a `minSdkVersion` of 19.
       compile project(':react-native-simple-native-geofencing')
   	```
 ### Permissions
+
+### iOS
+
+The framework itself asks for permissions for the notifications and the location. However, best practice would be to ask for permission from the user in React Native part. 
+
+The following changes must be in the `Info.plist` :
+
+```...
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>bla bla</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>bla bla 2</string>
+<key>UIBackgroundModes</key>
+<array>
+<string>location</string>
+</array>
+...
+```
 #### Android
 Edit AndroidManifest.xml and add the following permission and ServiceIntent:
 ```xml
@@ -173,14 +203,14 @@ export default class App extends Component {
 ### Methods
 | method      | arguments | notes |
 | ----------- | ----------- | ----------- |
-| `initNotification` | `settings`: SettingObject | Initializes the notification strings and when they should appear|
-| `addGeofence` | `geofence`: GeofenceObject, `duration`: number | Adds one geofence to the native geofence list |
-| `addGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number | Adds a list of geofences, a Geofence for monitoring and starts monitoring |
-| `removeAllGeofences` |  | Removes all geofences and stops monitoring |
-| `updateGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number | Deletes Geofences and adds the new ones without notifications|
-| `removeGeofence` |  `geofenceKey`: String| Removes a specific geofence |
-| `startMonitoring` | | Start monitoring |
-| `stopMonitoring` | | Stop monitoring |
+| `initNotification` | `settings`: SettingObject | Initializes the notification strings and when they should appear **(required)**|
+| `addGeofence` | `geofence`: GeofenceObject, `duration`: number | Adds one geofence to the native geofence list *(optional)* |
+| `addGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number | Adds a list of geofences, a Geofence for monitoring and starts monitoring **(required)** |
+| `removeAllGeofences` |  | Removes all geofences and stops monitoring *(optional)* |
+| `updateGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number | Deletes Geofences and adds the new ones without notifications *(optional)*|
+| `removeGeofence` |  `geofenceKey`: String| Removes a specific geofence *(optional)* |
+| `startMonitoring` | | Start monitoring *(optional)* |
+| `stopMonitoring` | | Stop monitoring *(optional)* |
 
 The function `monitoringCallback()` gets fired with the parameter of the remaining duration.
 `duration` is in millisec. 
@@ -241,8 +271,32 @@ The string ``[value]`` is automatically replaced by the GeofenceObject's value s
 
 ### Monitoring Geofences
 With this module you can also define a Monitoring Geofence that allows you to fire a react-native / javascript
-function when leaving. Therefore include this geofence in your List with the key "monitor" 
+function when leaving. Therefore include this geofence in your List with the key `"monitor"` 
 (see `MonitoringGeofenceObject` above) . The implementation of the function depends on Android or iOS.
+
+#### iOS
+
+If the app is in the background and a geofence trigger, the app's React Part will also start in the background. With a `NativeEventEmitter` a corresponding event can be intercepted.
+
+```
+import {... , NativeEventEmitter} from 'react-native';
+...
+componentWillMount(){ 
+    const myModuleEvt = new NativeEventEmitter(RNSimpleNativeGeofencing);
+        let subscription = myModuleEvt.addListener(
+        'leftMonitoringBorderWithDuration',
+        (result) => {
+        
+            //result is a Object with the remaining 
+            //duration of the activ geofences & a boolean
+            //for leaving or entering the monitoring boarder
+        
+            console.log("Event :");
+            console.log(JSON.stringify(result, null, 2));
+        }
+    );
+}
+```
 
 #### Android
 In Android this implementation uses Headless JS, which allows you to run javascript code in 
