@@ -4,13 +4,16 @@ package com.simplegeofencing.reactnative;
 import android.app.IntentService;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -24,11 +27,15 @@ import java.util.List;
 public class GeofenceTransitionsIntentService extends IntentService {
     private static final String TAG = "GeofenceService";
     private final String CHANNEL_ID = "channel_01";
-    private int notificationId = 100;
+    private int notificationId = 50;
     private NotificationChannel channel;
+    private static final String PREFERENCE_LAST_NOTIF_ID = "PREFERENCE_LAST_NOTIF_ID";
+    private Context mContext;
+
     public GeofenceTransitionsIntentService(){
         super(TAG);
-    }
+}
+
 
     @Override
     public void onCreate() {
@@ -38,7 +45,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
 
     protected void onHandleIntent(Intent intent) {
-        Log.i(TAG, "onHandleIntent");
+        this.mContext = this.getApplicationContext();
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()) {
             String errorMessage = "Error Code: " + String.valueOf(geofencingEvent.getErrorCode());
@@ -62,23 +69,81 @@ public class GeofenceTransitionsIntentService extends IntentService {
                     triggeringGeofences
             );
 
+            //Check Monitor
+            if(geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT){
+                for (Geofence geofence : triggeringGeofences) {
+                    if(geofence.getRequestId().equals("monitor")){
+                        Log.i(TAG, "Outside Monitor");
+                        postNotification(
+                                "Monitor",
+                                "Out of Monitor",
+                                intent.getStringExtra("notifyChannelStringTitle"),
+                                intent.getStringExtra("notifyChannelStringDescription")
+                        );
+
+                        //SEND CALLBACK
+                        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
+                        Intent customEvent= new Intent("outOfMonitorGeofence");
+                        customEvent.putExtra("startTime", intent.getLongExtra("startTime", System.currentTimeMillis()));
+                        customEvent.putExtra("duration", intent.getIntExtra("duration", 3000));
+                        localBroadcastManager.sendBroadcast(customEvent);
+
+                    }
+                }
+            }
+
+
             if(geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER &&
                     intent.getBooleanExtra("notifyEnter", false)){
-                postNotification(
-                        intent.getStringExtra("notifyEnterStringTitle"),
-                        geofenceTransitionDetails,
-                        intent.getStringExtra("notifyChannelStringTitle"),
-                        intent.getStringExtra("notifyChannelStringDescription")
-                );
+
+                for (Geofence geofence : triggeringGeofences) {
+                    if(!geofence.getRequestId().equals("monitor")){
+                        String title = intent.getStringExtra("notifyEnterStringTitle");
+                        String description = intent.getStringExtra("notifyEnterStringDescription");
+                        ArrayList<String> geofenceValues = intent.getStringArrayListExtra("geofenceValues");
+                        ArrayList<String> geofenceKeys = intent.getStringArrayListExtra("geofenceKeys");
+                        int index = geofenceKeys.indexOf(geofence.getRequestId());
+                        try {
+                            description = description.replace("[value]", geofenceValues.get(index));
+                            title = title.replace("[value]", geofenceValues.get(index));
+                        } catch (IndexOutOfBoundsException e) {
+                            Log.i(TAG, "No value set");
+                        }
+
+                        postNotification(
+                                title,
+                                description,
+                                intent.getStringExtra("notifyChannelStringTitle"),
+                                intent.getStringExtra("notifyChannelStringDescription")
+                        );
+                    }
+                }
+
             }
             if(geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT &&
                     intent.getBooleanExtra("notifyExit", false)){
-                postNotification(
-                        intent.getStringExtra("notifyExitStringTitle"),
-                        geofenceTransitionDetails,
-                        intent.getStringExtra("notifyChannelStringTitle"),
-                        intent.getStringExtra("notifyChannelStringDescription")
-                );
+                for (Geofence geofence : triggeringGeofences) {
+                    if(!geofence.getRequestId().equals("monitor")){
+                        String title = intent.getStringExtra("notifyExitStringTitle");
+                        String description = intent.getStringExtra("notifyExitStringDescription");
+                        ArrayList<String> geofenceValues = intent.getStringArrayListExtra("geofenceValues");
+                        ArrayList<String> geofenceKeys = intent.getStringArrayListExtra("geofenceKeys");
+                        int index = geofenceKeys.indexOf(geofence.getRequestId());
+                        try {
+                            description = description.replace("[value]", geofenceValues.get(index));
+                            title = title.replace("[value]", geofenceValues.get(index));
+                        } catch (IndexOutOfBoundsException e) {
+                            Log.i(TAG, "No value set");
+                        }
+
+                        postNotification(
+                                title,
+                                description,
+                                intent.getStringExtra("notifyChannelStringTitle"),
+                                intent.getStringExtra("notifyChannelStringDescription")
+                        );
+                    }
+                }
             }
 
             Log.i(TAG, geofenceTransitionDetails);
@@ -141,6 +206,8 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 .setContentTitle(title)
                 .setContentText(content)
                 .setSmallIcon(this.getApplicationInfo().icon)
+                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(),
+                        this.getApplicationInfo().icon))
                 .setAutoCancel(true);
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
@@ -165,8 +232,16 @@ public class GeofenceTransitionsIntentService extends IntentService {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
 
         // notificationId is a unique int for each notification that you must define
-        notificationManager.notify(notificationId,
+        notificationManager.notify(getNextNotifId(mContext),
                 getNotificationBuilder(Title, Content, channelTitle, channelDescription).build());
-        notificationId++;
+    }
+
+
+    private static int getNextNotifId(Context context) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        int id = sharedPreferences.getInt(PREFERENCE_LAST_NOTIF_ID, 0) + 1;
+        if (id == Integer.MAX_VALUE) { id = 0; }
+        sharedPreferences.edit().putInt(PREFERENCE_LAST_NOTIF_ID, id).apply();
+        return id;
     }
 }
