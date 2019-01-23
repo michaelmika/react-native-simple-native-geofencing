@@ -1,6 +1,6 @@
 {
   "name": "react-native-simple-native-geofencing",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "**Attention: This repo is not yet fully implemented and stable!**",
   "main": "index.js",
   "scripts": {
