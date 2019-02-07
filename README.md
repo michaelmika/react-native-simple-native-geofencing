@@ -167,7 +167,9 @@ export default class App extends Component {
             }
          );
     }
-    
+    fail(){
+        console.log("Fail to start geofencing")
+    }
     startMonitoring(){
         let geofences = [
           {
@@ -192,7 +194,7 @@ export default class App extends Component {
             value: "red"
           }
         ];
-        RNSimpleNativeGeofencing.addGeofences(geofences, 3000000);
+        RNSimpleNativeGeofencing.addGeofences(geofences, 3000000, this.fail);
     }
     
     stopMonitoring(){
@@ -205,11 +207,11 @@ export default class App extends Component {
 | ----------- | ----------- | ----------- |
 | `initNotification` | `settings`: SettingObject | Initializes the notification strings and when they should appear **(required)**|
 | `addGeofence` | `geofence`: GeofenceObject, `duration`: number | Adds one geofence to the native geofence list *(optional)* |
-| `addGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number | Adds a list of geofences, a Geofence for monitoring and starts monitoring **(required)** |
+| `addGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number, `failCallback`: function | Adds a list of geofences, a Geofence for monitoring and starts monitoring **(required)** |
 | `removeAllGeofences` |  | Removes all geofences and stops monitoring *(optional)* |
 | `updateGeofences` | `geofencesArray`: Array<GeofenceObject>, `duration`: number | Deletes Geofences and adds the new ones without notifications *(optional)*|
 | `removeGeofence` |  `geofenceKey`: String| Removes a specific geofence *(optional)* |
-| `startMonitoring` | | Start monitoring *(optional)* |
+| `startMonitoring` | `failCallback`: function | Start monitoring *(optional)* |
 | `stopMonitoring` | | Stop monitoring *(optional)* |
 
 The function `monitoringCallback()` gets fired with the parameter of the remaining duration.
