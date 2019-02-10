@@ -44,12 +44,10 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
     var globaltimer: Timer?
     
     var valueDic: Dictionary<String, String> = [:]
+    var locationAuthorized = false
+    var notificationAuthorized = false
     
     
-    
-    
-    
-    //MARK: - Init
     
     override func supportedEvents() -> [String]! {
         return ["leftMonitoringBorderWithDuration"]
@@ -67,6 +65,9 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         notificationCenter.requestAuthorization(options: options) { (granted, error) in
             if !granted {
                 print("Permission not granted")
+                self.notificationAuthorized = false
+            }else{
+                self.notificationAuthorized = true
             }
         }
         
@@ -140,32 +141,13 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
                 identifier: id
             )
             
-            if self.notifyEnter {
-                geofenceRegion.notifyOnEntry = true
-                
-                if value != nil {
-                    self.valueDic[id] = value!
-                }
-                
-            }else{
-                geofenceRegion.notifyOnEntry = false
+            if value != nil {
+                self.valueDic[id] = value!
             }
             
-            if self.notifyExit {
-                geofenceRegion.notifyOnExit = true
-                
-                if value != nil {
-                    self.valueDic[id] = value!
-                }
-                
-            }else{
-                geofenceRegion.notifyOnExit = false
-            }
+            geofenceRegion.notifyOnExit = true
+            geofenceRegion.notifyOnEntry = true
             
-            if id == "monitor"{
-                geofenceRegion.notifyOnExit = true
-                geofenceRegion.notifyOnEntry = true
-            }
             
             if !(duration <= 0) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(duration)) {
@@ -181,8 +163,8 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
     }
     
     
-    @objc(addGeofences:duration:)
-    func addGeofences(geofencesArray:NSArray, duration:Int) -> Void {
+    @objc(addGeofences:duration:failCallback:)
+    func addGeofences(geofencesArray:NSArray, duration:Int, failCallback: @escaping RCTResponseSenderBlock) -> Void {
         
         DispatchQueue.main.async {
             
@@ -204,6 +186,26 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
             self.globalDeletionTimer = duration
             
             self.globaltimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(self.globalCountdown), userInfo: nil, repeats: true)
+            
+            
+            let options: UNAuthorizationOptions = [.alert, .sound]
+            self.notificationCenter.requestAuthorization(options: options) { (granted, error) in
+                if !granted {
+                    print("Permission not granted")
+                    self.notificationAuthorized = false
+                }else{
+                    self.notificationAuthorized = true
+                }
+            }
+            
+            if !(self.locationAuthorized && self.notificationAuthorized) {
+                
+                let resultsDict = [
+                    "success" : false
+                ];
+                
+                failCallback([NSNull() ,resultsDict])
+            }
             
         }
         
@@ -472,12 +474,16 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
                 }
             }
             
+            var identifier = ""
+            
             if didEnter {
                 content.title = self.didEnterTitle
                 content.body = self.didEnterBody
+                identifier = "enter: \(region.identifier)"
             }else{
                 content.title = self.didExitTitle
                 content.body = self.didExitBody
+                identifier = "exit: \(region.identifier)"
             }
             
             
@@ -488,7 +494,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
                 repeats: false
             )
             
-            let identifier = region.identifier
             
             let request = UNNotificationRequest(
                 identifier: identifier,
@@ -501,6 +506,15 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
                     print("Error adding notification with identifier: \(identifier)")
                 }
             })
+            
+            
+            if !didEnter {
+                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(10)) {
+                    self.notificationCenter.removeDeliveredNotifications(withIdentifiers: ["enter: \(region.identifier)","exit: \(region.identifier)"])
+                    
+                }
+            }
+            
         }
         
         
@@ -554,6 +568,7 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
             
             self.handleEvent(region:region, didEnter: true)
             
+            
         }
     }
     
@@ -568,6 +583,9 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         if status != .authorizedAlways {
             print("Geofence will not Work, because of missing Authorization")
+            locationAuthorized = false
+        }else{
+            locationAuthorized = true
         }
     }
     

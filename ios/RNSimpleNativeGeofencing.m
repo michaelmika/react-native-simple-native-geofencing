@@ -12,7 +12,8 @@ RCT_EXTERN_METHOD(addGeofence:  (NSDictionary *)geofence
                   duration:(NSInteger *)duration)
 
 RCT_EXTERN_METHOD(addGeofences: (NSArray *)geofencesArray
-                  duration:(NSInteger *)duration)
+                  duration:(NSInteger *)duration
+                  failCallback:(RCTResponseSenderBlock *)failCallback)
 
 RCT_EXTERN_METHOD(updateGeofences:  (NSArray *)geofencesArray
                   duration:(NSInteger *)duration)
