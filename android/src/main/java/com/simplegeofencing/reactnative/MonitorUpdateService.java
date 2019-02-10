@@ -22,7 +22,7 @@ public class MonitorUpdateService extends HeadlessJsTaskService {
             return new HeadlessJsTaskConfig(
                     "leftMonitoringBorderWithDuration",
                     Arguments.fromBundle(extras),
-                    extras.getInt("duration", 5000000), // timeout for the task
+                    extras.getInt("duration", 50000000), // timeout for the task
                     true // optional: defines whether or not  the task is allowed in foreground. Default is false
             );
 

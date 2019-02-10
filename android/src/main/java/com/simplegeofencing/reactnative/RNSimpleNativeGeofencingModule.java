@@ -35,6 +35,7 @@ import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,6 +65,9 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   private static final String PREFERENCE_LAST_NOTIF_ID = "PREFERENCE_LAST_NOTIF_ID";
   private ArrayList<String> geofenceValues;
   private ArrayList<String> geofenceKeys;
+  private static final String NOTIFICATION_TAG = "GeofenceNotification";
+  private static final int NOTIFICATION_ID_START = 1;
+  private static final int NOTIFICATION_ID_STOP = 150;
 
 
   public RNSimpleNativeGeofencingModule(ReactApplicationContext reactContext) {
@@ -146,7 +150,8 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void addGeofences(
           ReadableArray geofenceArray,
-          int duration)
+          int duration,
+          Callback failCallback)
   {
     //Add geohashes
     for (int i = 0; i < geofenceArray.size(); i++) {
@@ -154,7 +159,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
       addGeofence(geofence, duration);
     }
     //Start Monitoring
-    startMonitoring();
+    startMonitoring(failCallback);
   }
 
   @ReactMethod
@@ -195,7 +200,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void startMonitoring() {
+  public void startMonitoring(final Callback failCallback) {
     //Context removed by Listeners
     //if (ContextCompat.checkSelfPermission(this.reactContext, Manifest.permission.ACCESS_FINE_LOCATION)
     //        != PackageManager.PERMISSION_GRANTED){
@@ -235,6 +240,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
         .addOnFailureListener(new OnFailureListener() {
           @Override
           public void onFailure(@NonNull Exception e) {
+            failCallback.invoke(e.getMessage());
             Log.e(TAG, "Adding Geofences: " + e.getMessage());
           }
         });
@@ -318,7 +324,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void testNotify(){
     Log.i(TAG, "TestNotify Callback worked");
-    postNotification("TestNotify", "Callback worked");
+    postNotification("TestNotify", "Callback worked", false);
   }
 
   /*
@@ -337,7 +343,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     if (mGeofencePendingIntent != null) {
       return mGeofencePendingIntent;
     }
-    Intent intent = new Intent(reactContext, GeofenceTransitionsIntentService.class);
+    Intent intent = new Intent(this.getCurrentActivity(), GeofenceTransitionsIntentService.class);
     // Add notification data
     intent.putExtra("notifyEnter", notifyEnter);
     if(notifyEnter == true){
@@ -374,29 +380,30 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   private void notifyNow(String action){
     if(action == "start"){
       if(notifyStart == true){
-        postNotification(notifyStartString[0], notifyStartString[1]);
+        postNotification(notifyStartString[0], notifyStartString[1], true);
       }
     }
     if(action == "stop"){
       if(notifyStop == true){
-        postNotification(notifyStopString[0], notifyStopString[1]);
+        postNotification(notifyStopString[0], notifyStopString[1], false);
       }
     }
   }
-  private NotificationCompat.Builder getNotificationBuilder(String Title, String Content) {
+  private NotificationCompat.Builder getNotificationBuilder(String title, String content) {
     //Onclick
-    //Intent intent = new Intent(this.reactContext, AlertDetails.class);
-    //intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-    //PendingIntent pendingIntent = PendingIntent.getActivity(this.reactContext, 0, intent, 0);
+    Intent intent = new Intent(getReactApplicationContext(), this.getCurrentActivity().getClass());
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    PendingIntent contentIntent = PendingIntent.getActivity(this.reactContext, 0, intent, 0);
+    //Intent intent = new Intent(this.getReactApplicationContext(), NotificationEventReceiver.class);
+    //PendingIntent contentIntent = PendingIntent.getBroadcast(this.getReactApplicationContext(), NOTIFICATION_ID_STOP, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
     //Build notification
     NotificationCompat.Builder notification = new NotificationCompat.Builder(this.reactContext, CHANNEL_ID)
-            .setContentTitle(Title)
-            .setContentText(Content)
+            .setContentTitle(title)
+            .setStyle(new NotificationCompat.BigTextStyle().bigText(content))
+            .setContentText(content)
             .setSmallIcon(getReactApplicationContext().getApplicationInfo().icon)
-            .setLargeIcon(BitmapFactory.decodeResource(getReactApplicationContext().getResources(),
-                    getReactApplicationContext().getApplicationInfo().icon))
-            .setAutoCancel(true);
+            .setContentIntent(contentIntent);
     // Create the NotificationChannel, but only on API 26+ because
     // the NotificationChannel class is new and not in the support library
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channel==null) {
@@ -413,13 +420,16 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     }
     return notification;
   }
-  public void postNotification(String Title, String Content){
+  public void postNotification(String title, String content, boolean start){
     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.reactContext);
 
-    // notificationId is a unique int for each notification that you must define
-    notificationManager.notify(getNextNotifId(reactContext), getNotificationBuilder(Title, Content).build());
+    int notifyID = NOTIFICATION_ID_STOP;
+    if(start == true){
+      notifyID = NOTIFICATION_ID_START;
+    }
+    notificationManager.notify(NOTIFICATION_TAG, notifyID, getNotificationBuilder(title, content).build());
   }
-
+  /*
   private static int getNextNotifId(Context context) {
     SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     int id = sharedPreferences.getInt(PREFERENCE_LAST_NOTIF_ID, 0) + 1;
@@ -427,7 +437,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     sharedPreferences.edit().putInt(PREFERENCE_LAST_NOTIF_ID, id).apply();
     return id;
   }
-
+  */
   //BroadcastReceiver
   public class LocalBroadcastReceiver extends BroadcastReceiver {
     @Override
