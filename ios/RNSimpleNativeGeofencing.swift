@@ -188,24 +188,25 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
             self.globaltimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(self.globalCountdown), userInfo: nil, repeats: true)
             
             
-            let options: UNAuthorizationOptions = [.alert, .sound]
-            self.notificationCenter.requestAuthorization(options: options) { (granted, error) in
-                if !granted {
+            self.notificationCenter.getNotificationSettings(completionHandler: { (settings) in
+                
+                if settings.authorizationStatus == .denied {
                     print("Permission not granted")
                     self.notificationAuthorized = false
                 }else{
                     self.notificationAuthorized = true
                 }
-            }
-            
-            if !(self.locationAuthorized && self.notificationAuthorized) {
                 
-                let resultsDict = [
-                    "success" : false
-                ];
+                if !(self.locationAuthorized && self.notificationAuthorized) {
+                    
+                    let resultsDict = [
+                        "success" : false
+                    ];
+                    
+                    failCallback([NSNull() ,resultsDict])
+                }
                 
-                failCallback([NSNull() ,resultsDict])
-            }
+            })
             
         }
         
@@ -581,7 +582,7 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
     }
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        if status != .authorizedAlways {
+        if status == .denied {
             print("Geofence will not Work, because of missing Authorization")
             locationAuthorized = false
         }else{
