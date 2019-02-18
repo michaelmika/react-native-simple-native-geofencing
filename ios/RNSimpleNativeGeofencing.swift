@@ -44,8 +44,8 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
     var globaltimer: Timer?
     
     var valueDic: Dictionary<String, String> = [:]
-    var locationAuthorized = false
-    var notificationAuthorized = false
+    var locationAuthorized = true
+    var notificationAuthorized = true
     
     
     
@@ -63,10 +63,7 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         let options: UNAuthorizationOptions = [.alert, .sound]
         notificationCenter.requestAuthorization(options: options) { (granted, error) in
-            if !granted {
-                print("Permission not granted")
-                self.notificationAuthorized = false
-            }else{
+            if granted {
                 self.notificationAuthorized = true
             }
         }
