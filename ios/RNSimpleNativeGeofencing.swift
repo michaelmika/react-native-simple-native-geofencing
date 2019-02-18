@@ -107,7 +107,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             guard let lat = geofence.value(forKey: "latitude") as? Double else {
                 return
@@ -165,7 +164,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             //add small geofences
             for geofence in geofencesArray {
@@ -215,7 +213,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             self.removeAllGeofences()
             
@@ -242,7 +239,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             //monitoring boarder (needs specific ID)
             self.addGeofence(geofence: geofence, duration: duration)
@@ -258,7 +254,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             var count = 0
             for geo in self.currentActiveGeofences {
@@ -286,7 +281,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             for geo in self.currentActiveGeofences {
                 
@@ -313,7 +307,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             var count = 0
             for geo in self.currentActiveGeofences {
@@ -349,7 +342,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             for geo in self.currentGeofences {
                 
@@ -373,7 +365,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             for geo in self.currentActiveGeofences {
                 
@@ -399,7 +390,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
         
         DispatchQueue.main.async {
             
-            self.allwaysInit()
             
             for geo in self.currentGeofences {
                 
