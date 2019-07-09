@@ -334,3 +334,5 @@ AppRegistry.registerHeadlessTask('leftMonitoringBorderWithDuration', () => requi
 
 # License
 This code is under [MIT license](https://opensource.org/licenses/MIT) and opened for contribution! Authors are Fabian Puch and Michael Raring.
+
+Contribution by cru3lgenius. Thanks! <3
