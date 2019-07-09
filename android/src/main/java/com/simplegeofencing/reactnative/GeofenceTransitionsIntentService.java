@@ -226,7 +226,9 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(content))
                 .setContentText(content)
                 .setSmallIcon(this.getApplicationInfo().icon)
-                .setContentIntent(contentIntent);
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true);
+
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channel==null) {
