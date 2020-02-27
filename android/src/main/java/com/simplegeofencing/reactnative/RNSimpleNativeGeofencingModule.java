@@ -290,8 +290,8 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
 
             AlarmManager am = (AlarmManager) reactContext.getSystemService(Context.ALARM_SERVICE);
             am.cancel(contentIntent);
-            successCallback.invoke();
           }
+          successCallback.invoke();
         }
       })
       .addOnFailureListener(new OnFailureListener() {
