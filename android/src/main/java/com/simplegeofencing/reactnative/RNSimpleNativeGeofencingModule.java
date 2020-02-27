@@ -123,9 +123,9 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void removeAllGeofences(final Callback successCallback, final Callback failCallback){
+  public void removeAllGeofences(final Callback successCallback){
     mGeofenceList.clear();
-    stopMonitoring(successCallback, failCallback);
+    stopMonitoring(successCallback);
   }
 
   @ReactMethod
@@ -268,7 +268,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void stopMonitoring(final Callback successCallback, final Callback failCallback) {
+  public void stopMonitoring(final Callback successCallback) {
     //Context removed by Listeners
     mGeofencingClient.removeGeofences(getGeofencePendingIntent())
       .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -298,7 +298,6 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
         @Override
         public void onFailure(@NonNull Exception e) {
           Log.e(TAG, "Removing Geofences: " + e.getMessage());
-          failCallback.invoke(e.getMessage());
         }
       });
   }
