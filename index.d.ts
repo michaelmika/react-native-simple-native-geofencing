@@ -52,7 +52,7 @@ export type InitNotificationsSettings = {
 export function initNotification(settings: InitNotificationsSettings): any;
 export function addGeofence(geofence: Geofence, duration: number): any;
 export function addGeofences(geofences: Geofence[], duration: number, failCallback: function): any;
-export function removeAllGeofences(): any;
+export function removeAllGeofences(successCallback: function): any;
 export function updateGeofences(geofences: Geofence[], duration: number): any;
 export function removeGeofence(key: string): any;
 export function startMonitoring(failCallback: function): any;
