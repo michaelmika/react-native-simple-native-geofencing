@@ -124,6 +124,9 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void removeAllGeofences(final Callback successCallback){
+    if (mGeofenceList.size() === 0) {
+      successCallback.invoke();
+    }
     mGeofenceList.clear();
     stopMonitoring(successCallback);
   }
