@@ -84,7 +84,7 @@ Edit AndroidManifest.xml and add the following permission and ServiceIntent:
     <application
         ...
         android:allowBackup="true">
-        <service android:name="com.simplegeofencing.reactnative.GeofenceTransitionsIntentService"/>
+        <receiver android:name="com.simplegeofencing.reactnative.GeofenceTransitionsBroadcastReceiver" />
         <service android:name="com.simplegeofencing.reactnative.ShowTimeoutNotification" />
     <application/>
 </manifest>

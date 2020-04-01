@@ -343,7 +343,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     if (mGeofencePendingIntent != null) {
       return mGeofencePendingIntent;
     }
-    Intent intent = new Intent(this.getCurrentActivity(), GeofenceTransitionsIntentService.class);
+    Intent intent = new Intent(this.getCurrentActivity(), GeofenceTransitionsBroadcastReceiver.class);
     // Add notification data
     intent.putExtra("notifyEnter", notifyEnter);
     if(notifyEnter == true){
@@ -369,7 +369,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     intent.putStringArrayListExtra("geofenceValues", geofenceValues);
     // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
     // calling addGeofences() and removeGeofences().
-    mGeofencePendingIntent = PendingIntent.getService(reactContext, 0, intent, PendingIntent.
+    mGeofencePendingIntent = PendingIntent.getBroadcast(reactContext, 0, intent, PendingIntent.
             FLAG_UPDATE_CURRENT);
     return mGeofencePendingIntent;
   }
