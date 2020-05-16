@@ -2,7 +2,7 @@ package com.simplegeofencing.reactnative;
 
 
 import android.app.Activity;
-import android.app.IntentService;
+import android.content.BroadcastReceiver;
 import android.app.LocalActivityManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -30,8 +30,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GeofenceTransitionsIntentService extends IntentService {
-    private static final String TAG = "GeofenceService";
+public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
+    private static final String TAG = "GeofenceBroadcastReceiver";
     private final String CHANNEL_ID = "channel_01";
     private static final String NOTIFICATION_TAG = "GeofenceNotification";
     private static final int NOTIFICATION_ID = 101;
@@ -39,20 +39,9 @@ public class GeofenceTransitionsIntentService extends IntentService {
     private static final String PREFERENCE_LAST_NOTIF_ID = "PREFERENCE_LAST_NOTIF_ID";
     private Context mContext;
 
-    public GeofenceTransitionsIntentService(){
-        super(TAG);
-}
-
-
     @Override
-    public void onCreate() {
-        super.onCreate();
-        Log.i(TAG, "Intent created");
-    }
-
-
-    protected void onHandleIntent(Intent intent) {
-        this.mContext = this.getApplicationContext();
+    public void onReceive(Context context, Intent intent) {
+        this.mContext = context;
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()) {
             String errorMessage = "Error Code: " + String.valueOf(geofencingEvent.getErrorCode());
@@ -84,7 +73,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
                         Log.i(TAG, "Outside Monitor");
 
                         //SEND CALLBACK
-                        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
+                        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this.mContext);
                         Intent customEvent= new Intent("outOfMonitorGeofence");
                         customEvent.putExtra("startTime", intent.getLongExtra("startTime", System.currentTimeMillis()));
                         customEvent.putExtra("duration", intent.getIntExtra("duration", 3000));
@@ -176,7 +165,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
     }
 
     /*
-        Helpfunctions for logging
+        Help functions for logging
      */
     private String getGeofenceTransitionDetails(
             int geofenceTransition,
@@ -193,6 +182,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
         return geofenceTransitionString + ": " + triggeringGeofencesIdsString;
     }
+
     private String getTransitionString(int transitionType) {
         switch (transitionType) {
             case Geofence.GEOFENCE_TRANSITION_ENTER:
@@ -221,11 +211,11 @@ public class GeofenceTransitionsIntentService extends IntentService {
         //PendingIntent contentIntent = PendingIntent.getBroadcast(this.mContext, NOTIFICATION_ID, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         //Build notification
-        NotificationCompat.Builder notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+        NotificationCompat.Builder notification = new NotificationCompat.Builder(this.mContext, CHANNEL_ID)
                 .setContentTitle(title)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(content))
                 .setContentText(content)
-                .setSmallIcon(this.getApplicationInfo().icon)
+                .setSmallIcon(this.mContext.getApplicationInfo().icon)
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true);
 
@@ -239,7 +229,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
             channel.setDescription(description);
             // Register the channel with the system; you can't change the importance
             // or other notification behaviors after this
-            NotificationManager notificationManager = this.getSystemService(NotificationManager.class);
+            NotificationManager notificationManager = this.mContext.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
             notification.setChannelId(CHANNEL_ID);
         }
@@ -252,21 +242,22 @@ public class GeofenceTransitionsIntentService extends IntentService {
                                  String channelDescription,
                                  Intent pIntent
     ){
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.mContext);
 
         // notificationId is a unique int for each notification that you must define
         notificationManager.notify(NOTIFICATION_TAG, NOTIFICATION_ID,
                 getNotificationBuilder(title, content, channelTitle, channelDescription, pIntent).build());
     }
     public void clearNotification(){
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.mContext);
         notificationManager.cancel(NOTIFICATION_TAG, NOTIFICATION_ID);
     }
 
     public Class getMainActivityClass() {
-        String packageName = getApplicationContext().getPackageName();
-        Intent launchIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
+        String packageName = this.mContext.getPackageName();
+        Intent launchIntent = this.mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
         String className = launchIntent.getComponent().getClassName();
+
         try {
             return Class.forName(className);
         } catch (ClassNotFoundException e) {
@@ -274,14 +265,4 @@ public class GeofenceTransitionsIntentService extends IntentService {
             return null;
         }
     }
-
-    /*
-    private static int getNextNotifId(Context context) {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        int id = sharedPreferences.getInt(PREFERENCE_LAST_NOTIF_ID, 1) + 1;
-        if (id == Integer.MAX_VALUE) { id = 0; }
-        sharedPreferences.edit().putInt(PREFERENCE_LAST_NOTIF_ID, id).apply();
-        return id;
-    }
-    */
 }
