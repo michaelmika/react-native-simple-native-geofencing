@@ -276,7 +276,7 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
     }
 
 
-    @objc(successCallback:)
+    @objc(removeAllGeofences:)
     func removeAllGeofences(successCallback: RCTResponseSenderBlock? = nil) -> Void {
 
         DispatchQueue.main.async {

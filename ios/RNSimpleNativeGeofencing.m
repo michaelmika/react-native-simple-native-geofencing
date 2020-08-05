@@ -23,7 +23,7 @@ RCT_EXTERN_METHOD(addMonitoringBorder:  (NSDictionary *)geofence
 
 RCT_EXTERN_METHOD(removeMonitoringBorder)
 
-RCT_EXTERN_METHOD(removeAllGeofences)
+RCT_EXTERN_METHOD(removeAllGeofences: (RCTResponseSenderBlock *)successCallback)
 
 RCT_EXTERN_METHOD(removeGeofence: (NSString *)geofenceKey)
 
