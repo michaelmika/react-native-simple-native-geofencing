@@ -13,11 +13,10 @@ import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-//import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.facebook.react.HeadlessJsTaskService;
@@ -124,9 +123,9 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void removeAllGeofences(){
+  public void removeAllGeofences(final Callback successCallback){
     mGeofenceList.clear();
-    stopMonitoring();
+    stopMonitoring(successCallback);
   }
 
   @ReactMethod
@@ -269,7 +268,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void stopMonitoring() {
+  public void stopMonitoring(final Callback successCallback) {
     //Context removed by Listeners
     mGeofencingClient.removeGeofences(getGeofencePendingIntent())
       .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -292,8 +291,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
             AlarmManager am = (AlarmManager) reactContext.getSystemService(Context.ALARM_SERVICE);
             am.cancel(contentIntent);
           }
-
-
+          successCallback.invoke();
         }
       })
       .addOnFailureListener(new OnFailureListener() {
