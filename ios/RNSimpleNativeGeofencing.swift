@@ -17,7 +17,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
 
 
     //MARK: - Init / Setup / Vars
-
     static let sharedInstance = RNSimpleNativeGeofencing()
 
     let locationManager = CLLocationManager()
@@ -43,7 +42,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
     var globalDeletionTimer = 0
     var globaltimer: Timer?
 
-    var valueDic: Dictionary<String, String> = [:]
     var locationAuthorized = true
     var notificationAuthorized = true
 
@@ -138,7 +136,7 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
             )
 
             if value != nil {
-                self.valueDic[id] = value!
+                UserDefaults.standard.set(value, forKey: id);
             }
 
             geofenceRegion.notifyOnExit = true
@@ -284,7 +282,7 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
 
             for geo in self.currentActiveGeofences {
 
-                self.valueDic[geo.identifier] = nil
+                UserDefaults.standard.removeObject(forKey: geo.identifier)
 
                 self.locationManager.stopMonitoring(for: geo)
 
@@ -313,7 +311,7 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
             for geo in self.currentActiveGeofences {
                 if geo.identifier == geofenceKey{
 
-                    self.valueDic[geo.identifier] = nil
+                    UserDefaults.standard.removeObject(forKey: geo.identifier)
 
                     self.locationManager.stopMonitoring(for: geo)
                     self.currentActiveGeofences.remove(at: count)
@@ -325,7 +323,7 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
             for geo in self.currentGeofences {
                 if geo.identifier == geofenceKey{
 
-                    self.valueDic[geo.identifier] = nil
+                    UserDefaults.standard.removeObject(forKey: geo.identifier)
 
                     self.currentGeofences.remove(at: count2)
                 }
@@ -422,7 +420,6 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
     //MARK: - Setup Notifications
 
     private func handleEvent(region: CLRegion!, didEnter: Bool) {
-
         if region.identifier == "monitor" {
 
             if didEnter {
@@ -452,13 +449,13 @@ class RNSimpleNativeGeofencing: RCTEventEmitter, CLLocationManagerDelegate, UNUs
 
 
             if self.didEnterBody.contains("[value]") {
-                if let value = self.valueDic[region.identifier] {
+                if let value = UserDefaults.standard.string(forKey: region.identifier) {
                     self.didEnterBody = self.didEnterBody.replacingOccurrences(of: "[value]", with: value, options: NSString.CompareOptions.literal, range:nil)
                 }
             }
 
             if self.didExitBody.contains("[value]") {
-                if let value = self.valueDic[region.identifier] {
+                if let value = UserDefaults.standard.string(forKey: region.identifier) {
                     self.didExitBody = self.didExitBody.replacingOccurrences(of: "[value]", with: value, options: NSString.CompareOptions.literal, range:nil)
                 }
             }
