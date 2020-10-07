@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import android.util.Log;
+import android.content.res.Resources;
 
 public class ShowTimeoutNotification extends IntentService {
     private static final String TAG = "GeofenceTimeout";
@@ -38,15 +39,17 @@ public class ShowTimeoutNotification extends IntentService {
         postNotification(
                 intent.getStringExtra("notifyStringTitle"),
                 intent.getStringExtra("notifyStringDescription"),
+                intent.getStringExtra("notifyStringSmallIcon"),
                 intent.getStringExtra("notifyChannelStringTitle"),
                 intent.getStringExtra("notifyChannelStringDescription")
-        );
+                );
     }
     /*
        Notifications
     */
     private NotificationCompat.Builder getNotificationBuilder(String title,
                                                               String content,
+                                                              String smallIcon,
                                                               String channelTitle,
                                                               String channelDescription) {
         //Onclick
@@ -54,11 +57,15 @@ public class ShowTimeoutNotification extends IntentService {
         //intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         //PendingIntent pendingIntent = PendingIntent.getActivity(this.reactContext, 0, intent, 0);
 
-        //Build notification
+        //Build notificationnotification
+        Resources res = this.getResources();
+        String packageName = this.getPackageName();
+        int smallIconDrawable = res.getIdentifier(smallIcon, "drawable", packageName);
+
         NotificationCompat.Builder notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(content)
-                .setSmallIcon(this.getApplicationInfo().icon)
+                .setSmallIcon((smallIconDrawable != 0) ? smallIconDrawable : this.getApplicationInfo().icon)
                 .setLargeIcon(BitmapFactory.decodeResource(this.getResources(),
                         this.getApplicationInfo().icon))
                 .setAutoCancel(true);
@@ -70,6 +77,7 @@ public class ShowTimeoutNotification extends IntentService {
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
+
             // Register the channel with the system; you can't change the importance
             // or other notification behaviors after this
             NotificationManager notificationManager = this.getSystemService(NotificationManager.class);
@@ -78,15 +86,16 @@ public class ShowTimeoutNotification extends IntentService {
         }
         return notification;
     }
-    public void postNotification(String Title,
-                                 String Content,
+    public void postNotification(String title,
+                                 String content,
+                                 String smallIcon,
                                  String channelTitle,
                                  String channelDescription){
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
 
         // notificationId is a unique int for each notification that you must define
         notificationManager.notify(getNextNotifId(this.getApplicationContext()),
-                getNotificationBuilder(Title, Content, channelTitle, channelDescription).build());
+                getNotificationBuilder(title, content, smallIcon, channelTitle, channelDescription).build());
     }
 
 

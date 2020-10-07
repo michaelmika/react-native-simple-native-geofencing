@@ -146,23 +146,27 @@ export default class App extends Component {
               start: {
                 notify: true,
                 title: "Start Tracking",
-                description: "You are now tracked"
+                description: "You are now tracked",
+                smallIcon: "ic_notification",
               },
               stop: {
                 notify: true,
                 title: "Stopped Tracking",
-                description: "You are not tracked any longer"
+                description: "You are not tracked any longer",
+                smallIcon: "ic_notification",
               },
               enter: {
                 notify: true,
                 title: "Attention",
                 //[value] will be replaced ob geofences' value attribute
-                description: "You entered a [value] Zone"
+                description: "You entered a [value] Zone",
+                smallIcon: "ic_notification",
               },
               exit: {
                 notify: true,
                 title: "Left Zone",
-                description: "You left a [value] Zone"
+                description: "You left a [value] Zone",
+                smallIcon: "ic_notification",
               }
             }
          );
@@ -242,26 +246,31 @@ type SettingObject {
     notify: boolean,    // If Notification should be fired on start tracking
     title: string,      // Title of Notification
     description: string // Content of Notification
+    smallIcon: string   // Android Only: Name of the drawable for smallIcon (optional)
   },
   stop: {
     notify: boolean,
     title: string,
-    description: string
+    description: string,
+    smallIcon: string
   },
   timeout: {            // automatic stop by end of duration 
     notify: boolean,
     title: string,
-    description: string
+    description: string,
+    smallIcon: string
   },
   enter: {
     notify: boolean,
     title: string,
-    description: string
+    description: string,
+    smallIcon: string
   },
   exit: {
     notify: boolean,
     title: string,
-    description: string
+    description: string,
+    smallIcon: string
   },
   channel: {            // Only Android specific
     title: string,
