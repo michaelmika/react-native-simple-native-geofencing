@@ -60,10 +60,12 @@ public class ShowTimeoutNotification extends IntentService {
         //Build notificationnotification
         Resources res = this.getResources();
         String packageName = this.getPackageName();
+        int smallIconDrawable = res.getIdentifier(smallIcon, "drawable", packageName);
+
         NotificationCompat.Builder notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(content)
-                .setSmallIcon(res.getIdentifier(smallIcon, "drawable", packageName))
+                .setSmallIcon((smallIconDrawable != 0) ? smallIconDrawable : this.getApplicationInfo().icon)
                 .setLargeIcon(BitmapFactory.decodeResource(this.getResources(),
                         this.getApplicationInfo().icon))
                 .setAutoCancel(true);

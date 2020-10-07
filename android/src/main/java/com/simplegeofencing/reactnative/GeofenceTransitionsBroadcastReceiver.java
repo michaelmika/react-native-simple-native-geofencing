@@ -219,11 +219,13 @@ public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
         //Build notification
         Resources res = this.mContext.getResources();
         String packageName = this.mContext.getPackageName();
+        int smallIconDrawable = res.getIdentifier(smallIcon, "drawable", packageName);
+
         NotificationCompat.Builder notification = new NotificationCompat.Builder(this.mContext, CHANNEL_ID)
                 .setContentTitle(title)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(content))
                 .setContentText(content)
-                .setSmallIcon(res.getIdentifier(smallIcon, "drawable", packageName))
+                .setSmallIcon((smallIconDrawable != 0) ? smallIconDrawable : this.mContext.getApplicationInfo().icon)
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true);
 

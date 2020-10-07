@@ -411,12 +411,13 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     //Build notification
     Resources res = this.reactContext.getResources();
     String packageName = this.reactContext.getPackageName();
+    int smallIconDrawable = res.getIdentifier(smallIcon, "drawable", packageName);
 
     NotificationCompat.Builder notification = new NotificationCompat.Builder(this.reactContext, CHANNEL_ID)
             .setContentTitle(title)
             .setStyle(new NotificationCompat.BigTextStyle().bigText(content))
             .setContentText(content)
-            .setSmallIcon(res.getIdentifier(smallIcon, "drawable", packageName))
+            .setSmallIcon((smallIconDrawable != 0) ? smallIconDrawable : this.reactContext.getApplicationInfo().icon)
             .setContentIntent(contentIntent);
     // Create the NotificationChannel, but only on API 26+ because
     // the NotificationChannel class is new and not in the support library
