@@ -109,21 +109,21 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
       notifyStop = true;
       notifyStopString[0] = pStop.getString("title");
       notifyStopString[1] = pStop.getString("description");
-      notifyStopString[1] = pStop.getString("smallIcon");
+      notifyStopString[2] = pStop.getString("smallIcon");
     }
     ReadableMap pEnter = pText.getMap("enter");
     if(pEnter.getBoolean("notify")){
       notifyEnter = true;
       notifyEnterString[0] = pEnter.getString("title");
       notifyEnterString[1] = pEnter.getString("description");
-      notifyEnterString[1] = pEnter.getString("smallIcon");
+      notifyEnterString[2] = pEnter.getString("smallIcon");
     }
     ReadableMap pExit = pText.getMap("exit");
     if(pExit.getBoolean("notify")){
       notifyExit = true;
       notifyExitString[0] = pExit.getString("title");
       notifyExitString[1] = pExit.getString("description");
-      notifyExitString[1] = pExit.getString("smallIcon");
+      notifyExitString[2] = pExit.getString("smallIcon");
     }
   }
 
@@ -411,7 +411,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     //Build notification
     Resources res = this.reactContext.getResources();
     String packageName = this.reactContext.getPackageName();
-    int smallIconDrawable = res.getIdentifier(smallIcon, "drawable", packageName);
+    int smallIconDrawable = res.getIdentifier(smallIcon != null ? smallIcon : "", "drawable", packageName);
 
     NotificationCompat.Builder notification = new NotificationCompat.Builder(this.reactContext, CHANNEL_ID)
             .setContentTitle(title)
