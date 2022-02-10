@@ -33,7 +33,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-
+import android.content.res.Resources;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,10 +53,10 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   private boolean notifyStop = false;
   private boolean notifyEnter = false;
   private boolean notifyExit = false;
-  private String[] notifyStartString = new String[2];
-  private String[] notifyStopString = new String[2];
-  private String[] notifyEnterString = new String[2];
-  private String[] notifyExitString = new String[2];
+  private String[] notifyStartString = new String[3];
+  private String[] notifyStopString = new String[3];
+  private String[] notifyEnterString = new String[3];
+  private String[] notifyExitString = new String[3];
   private Long mStartTime;
   private int mDuration;
   private LocalBroadcastReceiver mLocalBroadcastReceiver;
@@ -96,29 +96,34 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     ReadableMap pChannel = pText.getMap("channel");
     notifyChannelString[0] = pChannel.getString("title");
     notifyChannelString[1] = pChannel.getString("description");
+
     ReadableMap pStart = pText.getMap("start");
     if(pStart.getBoolean("notify")){
       notifyStart = true;
       notifyStartString[0] = pStart.getString("title");
       notifyStartString[1] = pStart.getString("description");
+      notifyStartString[2] = pChannel.getString("smallIcon");
     }
     ReadableMap pStop = pText.getMap("stop");
     if(pStop.getBoolean("notify")){
       notifyStop = true;
       notifyStopString[0] = pStop.getString("title");
       notifyStopString[1] = pStop.getString("description");
+      notifyStopString[2] = pStop.getString("smallIcon");
     }
     ReadableMap pEnter = pText.getMap("enter");
     if(pEnter.getBoolean("notify")){
       notifyEnter = true;
       notifyEnterString[0] = pEnter.getString("title");
       notifyEnterString[1] = pEnter.getString("description");
+      notifyEnterString[2] = pEnter.getString("smallIcon");
     }
     ReadableMap pExit = pText.getMap("exit");
     if(pExit.getBoolean("notify")){
       notifyExit = true;
       notifyExitString[0] = pExit.getString("title");
       notifyExitString[1] = pExit.getString("description");
+      notifyExitString[2] = pExit.getString("smallIcon");
     }
   }
 
@@ -218,8 +223,10 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
               Intent notificationIntent = new Intent(reactContext, ShowTimeoutNotification.class);
               notificationIntent.putExtra("notifyChannelStringTitle", notifyChannelString[0]);
               notificationIntent.putExtra("notifyChannelStringDescription", notifyChannelString[1]);
+
               notificationIntent.putExtra("notifyStringTitle", notifyStopString[0]);
               notificationIntent.putExtra("notifyStringDescription", notifyStopString[1]);
+              notificationIntent.putExtra("notifyStringSmallIcon", notifyStopString[2]);
 
               PendingIntent contentIntent = PendingIntent.getService(reactContext, 0, notificationIntent,
                       PendingIntent.FLAG_CANCEL_CURRENT);
@@ -231,9 +238,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
               }else{
                 am.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()+mDuration, contentIntent);
               }
-
             }
-
           }
         })
         .addOnFailureListener(new OnFailureListener() {
@@ -282,8 +287,10 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
             Intent notificationIntent = new Intent(reactContext, ShowTimeoutNotification.class);
             notificationIntent.putExtra("notifyChannelStringTitle", notifyChannelString[0]);
             notificationIntent.putExtra("notifyChannelStringDescription", notifyChannelString[1]);
+
             notificationIntent.putExtra("notifyStringTitle", notifyStopString[0]);
             notificationIntent.putExtra("notifyStringDescription", notifyStopString[1]);
+            notificationIntent.putExtra("notifyStringSmallIcon", notifyStopString[2]);
 
             PendingIntent contentIntent = PendingIntent.getService(reactContext, 0, notificationIntent,
                     PendingIntent.FLAG_CANCEL_CURRENT);
@@ -322,7 +329,7 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void testNotify(){
     Log.i(TAG, "TestNotify Callback worked");
-    postNotification("TestNotify", "Callback worked", false);
+    postNotification("TestNotify", "Callback worked", "ic_notification", false);
   }
 
   /*
@@ -347,20 +354,26 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     if(notifyEnter == true){
       intent.putExtra("notifyEnterStringTitle", notifyEnterString[0]);
       intent.putExtra("notifyEnterStringDescription", notifyEnterString[1]);
+      intent.putExtra("notifyEnterStringSmallIcon", notifyEnterString[2]);
     }else{
       intent.putExtra("notifyEnterStringTitle", "");
       intent.putExtra("notifyEnterStringDescription", "");
+      intent.putExtra("notifyEnterStringSmallIcon", "ic_notification");
     }
     intent.putExtra("notifyExit", notifyExit);
     if(notifyExit == true){
       intent.putExtra("notifyExitStringTitle", notifyExitString[0]);
       intent.putExtra("notifyExitStringDescription", notifyExitString[1]);
+      intent.putExtra("notifyExitStringSmallIcon", notifyExitString[2]);
+
     }else{
       intent.putExtra("notifyExitStringTitle", "");
       intent.putExtra("notifyExitStringDescription", "");
+      intent.putExtra("notifyExitStringSmallIcon", "ic_notification");
     }
     intent.putExtra("notifyChannelStringTitle", notifyChannelString[0]);
     intent.putExtra("notifyChannelStringDescription", notifyChannelString[1]);
+
     intent.putExtra("startTime", (Long) System.currentTimeMillis());
     intent.putExtra("duration", mDuration);
     intent.putStringArrayListExtra("geofenceKeys", geofenceKeys);
@@ -378,16 +391,16 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
   private void notifyNow(String action){
     if(action == "start"){
       if(notifyStart == true){
-        postNotification(notifyStartString[0], notifyStartString[1], true);
+        postNotification(notifyStartString[0], notifyStartString[1], notifyStartString[2], true);
       }
     }
     if(action == "stop"){
       if(notifyStop == true){
-        postNotification(notifyStopString[0], notifyStopString[1], false);
+        postNotification(notifyStopString[0], notifyStopString[1], notifyStopString[2], false);
       }
     }
   }
-  private NotificationCompat.Builder getNotificationBuilder(String title, String content) {
+  private NotificationCompat.Builder getNotificationBuilder(String title, String content, String smallIcon) {
     //Onclick
     Intent intent = new Intent(getReactApplicationContext(), this.getCurrentActivity().getClass());
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -396,11 +409,15 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     //PendingIntent contentIntent = PendingIntent.getBroadcast(this.getReactApplicationContext(), NOTIFICATION_ID_STOP, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
     //Build notification
+    Resources res = this.reactContext.getResources();
+    String packageName = this.reactContext.getPackageName();
+    int smallIconDrawable = res.getIdentifier(smallIcon != null ? smallIcon : "", "drawable", packageName);
+
     NotificationCompat.Builder notification = new NotificationCompat.Builder(this.reactContext, CHANNEL_ID)
             .setContentTitle(title)
             .setStyle(new NotificationCompat.BigTextStyle().bigText(content))
             .setContentText(content)
-            .setSmallIcon(getReactApplicationContext().getApplicationInfo().icon)
+            .setSmallIcon((smallIconDrawable != 0) ? smallIconDrawable : this.reactContext.getApplicationInfo().icon)
             .setContentIntent(contentIntent);
     // Create the NotificationChannel, but only on API 26+ because
     // the NotificationChannel class is new and not in the support library
@@ -418,14 +435,14 @@ public class RNSimpleNativeGeofencingModule extends ReactContextBaseJavaModule {
     }
     return notification;
   }
-  public void postNotification(String title, String content, boolean start){
+  public void postNotification(String title, String content, String smallIcon, boolean start){
     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.reactContext);
 
     int notifyID = NOTIFICATION_ID_STOP;
     if(start == true){
       notifyID = NOTIFICATION_ID_START;
     }
-    notificationManager.notify(NOTIFICATION_TAG, notifyID, getNotificationBuilder(title, content).build());
+    notificationManager.notify(NOTIFICATION_TAG, notifyID, getNotificationBuilder(title, content, smallIcon).build());
   }
   /*
   private static int getNextNotifId(Context context) {

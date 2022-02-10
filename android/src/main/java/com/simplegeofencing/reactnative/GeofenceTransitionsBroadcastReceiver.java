@@ -21,7 +21,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
-
+import android.content.res.Resources;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -97,6 +97,8 @@ public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
                     Geofence geofence = geofencesWithoutMonitor.get(0);
                     String title = intent.getStringExtra("notifyEnterStringTitle");
                     String description = intent.getStringExtra("notifyEnterStringDescription");
+                    String smallIcon = intent.getStringExtra("notifyEnterStringSmallIcon");
+
                     ArrayList<String> geofenceValues = intent.getStringArrayListExtra("geofenceValues");
                     ArrayList<String> geofenceKeys = intent.getStringArrayListExtra("geofenceKeys");
                     int index = geofenceKeys.indexOf(geofence.getRequestId());
@@ -110,6 +112,7 @@ public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
                     postNotification(
                             title,
                             description,
+                            smallIcon,
                             intent.getStringExtra("notifyChannelStringTitle"),
                             intent.getStringExtra("notifyChannelStringDescription"),
                             intent
@@ -125,6 +128,7 @@ public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
                     Geofence geofence = geofencesWithoutMonitor.get(0);
                     String title = intent.getStringExtra("notifyExitStringTitle");
                     String description = intent.getStringExtra("notifyExitStringDescription");
+                    String smallIcon = intent.getStringExtra("notifyExitStringSmallIcon");
                     ArrayList<String> geofenceValues = intent.getStringArrayListExtra("geofenceValues");
                     ArrayList<String> geofenceKeys = intent.getStringArrayListExtra("geofenceKeys");
                     int index = geofenceKeys.indexOf(geofence.getRequestId());
@@ -138,6 +142,7 @@ public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
                     postNotification(
                             title,
                             description,
+                            smallIcon,
                             intent.getStringExtra("notifyChannelStringTitle"),
                             intent.getStringExtra("notifyChannelStringDescription"),
                             intent
@@ -199,6 +204,7 @@ public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
     */
     private NotificationCompat.Builder getNotificationBuilder(String title,
                                                               String content,
+                                                              String smallIcon,
                                                               String channelTitle,
                                                               String channelDescription,
                                                               Intent pIntent
@@ -211,11 +217,15 @@ public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
         //PendingIntent contentIntent = PendingIntent.getBroadcast(this.mContext, NOTIFICATION_ID, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         //Build notification
+        Resources res = this.mContext.getResources();
+        String packageName = this.mContext.getPackageName();
+        int smallIconDrawable = res.getIdentifier(smallIcon, "drawable", packageName);
+
         NotificationCompat.Builder notification = new NotificationCompat.Builder(this.mContext, CHANNEL_ID)
                 .setContentTitle(title)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(content))
                 .setContentText(content)
-                .setSmallIcon(this.mContext.getApplicationInfo().icon)
+                .setSmallIcon((smallIconDrawable != 0) ? smallIconDrawable : this.mContext.getApplicationInfo().icon)
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true);
 
@@ -238,6 +248,7 @@ public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
 
     public void postNotification(String title,
                                  String content,
+                                 String smallIcon,
                                  String channelTitle,
                                  String channelDescription,
                                  Intent pIntent
@@ -246,7 +257,7 @@ public class GeofenceTransitionsBroadcastReceiver extends BroadcastReceiver {
 
         // notificationId is a unique int for each notification that you must define
         notificationManager.notify(NOTIFICATION_TAG, NOTIFICATION_ID,
-                getNotificationBuilder(title, content, channelTitle, channelDescription, pIntent).build());
+                getNotificationBuilder(title, content, smallIcon, channelTitle, channelDescription, pIntent).build());
     }
     public void clearNotification(){
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.mContext);
